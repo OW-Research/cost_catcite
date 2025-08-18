@@ -1,0 +1,92 @@
+[ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.5.1:java (default-cli) on project calcite-stats-example: An exception occurred while executing the Java class. There are not enough rules to produce a node with desired properties: convention=NONE. All the inputs have relevant nodes, however the cost is still infinite.
+[ERROR] Root: rel#13:RelSubset#3.NONE
+[ERROR] Original rel:
+[ERROR] LogicalProject(ID=[$0], NAME=[$3]): rowcount = 1500.0, cumulative cost = {3200.0 rows, 3202.0 cpu, 0.0 io}, id = 7
+[ERROR]   LogicalJoin(condition=[=($0, $2)], joinType=[inner]): rowcount = 1500.0, cumulative cost = {1700.0 rows, 202.0 cpu, 0.0 io}, id = 5
+[ERROR]     LogicalTableScan(table=[[USERS]]): rowcount = 100.0, cumulative cost = {100.0 rows, 101.0 cpu, 0.0 io}, id = 1
+[ERROR]     LogicalTableScan(table=[[PRODUCTS]]): rowcount = 100.0, cumulative cost = {100.0 rows, 101.0 cpu, 0.0 io}, id = 3
+[ERROR]
+[ERROR] Sets:
+[ERROR] Set#0, type: RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME)
+[ERROR]         rel#8:RelSubset#0.NONE, best=null
+[ERROR]                 rel#1:LogicalTableScan.NONE(table=[USERS]), rowcount=100.0, cumulative cost={inf}
+[ERROR]         rel#18:RelSubset#0.ENUMERABLE, best=null
+[ERROR] Set#1, type: RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME)
+[ERROR]         rel#9:RelSubset#1.NONE, best=null
+[ERROR]                 rel#3:LogicalTableScan.NONE(table=[PRODUCTS]), rowcount=100.0, cumulative cost={inf}
+[ERROR]         rel#19:RelSubset#1.ENUMERABLE, best=null
+[ERROR] Set#2, type: RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME, JavaType(int) ID0, JavaType(class java.lang.String) NAME0)
+[ERROR]         rel#11:RelSubset#2.NONE, best=null
+[ERROR]                 rel#10:LogicalJoin.NONE(left=RelSubset#8,right=RelSubset#9,condition==($0, $2),joinType=inner), rowcount=1500.0, cumulative cost={inf}
+[ERROR]                 rel#17:LogicalProject.NONE(input=RelSubset#16,exprs=[$2, $3, $0, $1]), rowcount=1500.0, cumulative cost={inf}
+[ERROR]         rel#21:RelSubset#2.ENUMERABLE, best=null
+[ERROR]                 rel#20:EnumerableHashJoin.ENUMERABLE(left=RelSubset#18,right=RelSubset#19,condition==($0, $2),joinType=inner), rowcount=1500.0, cumulative cost={inf}
+[ERROR]                 rel#29:EnumerableProject.ENUMERABLE(input=RelSubset#28,exprs=[$2, $3, $0, $1]), rowcount=1500.0, cumulative cost={inf}
+[ERROR] Set#3, type: RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME)
+[ERROR]         rel#13:RelSubset#3.NONE, best=null
+[ERROR]                 rel#12:LogicalProject.NONE(input=RelSubset#11,inputs=0,exprs=[$3]), rowcount=1500.0, cumulative cost={inf}
+[ERROR]         rel#23:RelSubset#3.ENUMERABLE, best=null
+[ERROR]                 rel#22:EnumerableProject.ENUMERABLE(input=RelSubset#21,inputs=0,exprs=[$3]), rowcount=1500.0, cumulative cost={inf}
+[ERROR] Set#4, type: RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME, JavaType(int) ID0, JavaType(class java.lang.String) NAME0)
+[ERROR]         rel#16:RelSubset#4.NONE, best=null
+[ERROR]                 rel#14:LogicalJoin.NONE(left=RelSubset#9,right=RelSubset#8,condition==($2, $0),joinType=inner), rowcount=1500.0, cumulative cost={inf}
+[ERROR]                 rel#26:LogicalProject.NONE(input=RelSubset#11,exprs=[$2, $3, $0, $1]), rowcount=1500.0, cumulative cost={inf}
+[ERROR]         rel#28:RelSubset#4.ENUMERABLE, best=null
+[ERROR]                 rel#27:EnumerableHashJoin.ENUMERABLE(left=RelSubset#19,right=RelSubset#18,condition==($0, $2),joinType=inner), rowcount=1500.0, cumulative cost={inf}
+[ERROR]                 rel#30:EnumerableProject.ENUMERABLE(input=RelSubset#21,exprs=[$2, $3, $0, $1]), rowcount=1500.0, cumulative cost={inf}
+[ERROR]
+[ERROR] Graphviz:
+[ERROR] digraph G {
+[ERROR]         root [style=filled,label="Root"];
+[ERROR]         subgraph cluster0{
+[ERROR]                 label="Set 0 RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME)";
+[ERROR]                 rel1 [label="rel#1:LogicalTableScan\ntable=[USERS]\nrows=100.0, cost={inf}",shape=box]
+[ERROR]                 subset8 [label="rel#8:RelSubset#0.NONE"]
+[ERROR]                 subset18 [label="rel#18:RelSubset#0.ENUMERABLE",color=red]
+[ERROR]         }
+[ERROR]         subgraph cluster1{
+[ERROR]                 label="Set 1 RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME)";
+[ERROR]                 rel3 [label="rel#3:LogicalTableScan\ntable=[PRODUCTS]\nrows=100.0, cost={inf}",shape=box]
+[ERROR]                 subset9 [label="rel#9:RelSubset#1.NONE"]
+[ERROR]                 subset19 [label="rel#19:RelSubset#1.ENUMERABLE",color=red]
+[ERROR]         }
+[ERROR]         subgraph cluster2{
+[ERROR]                 label="Set 2 RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME, JavaType(int) ID0, JavaType(class java.lang.String) NAME0)";
+[ERROR]                 rel10 [label="rel#10:LogicalJoin\nleft=RelSubset#8,right=RelSubset#9,condition==($0, $2),joinType=inner\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 rel17 [label="rel#17:LogicalProject\ninput=RelSubset#16,exprs=[$2, $3, $0, $1]\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 rel20 [label="rel#20:EnumerableHashJoin\nleft=RelSubset#18,right=RelSubset#19,condition==($0, $2),joinType=inner\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 rel29 [label="rel#29:EnumerableProject\ninput=RelSubset#28,exprs=[$2, $3, $0, $1]\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 subset11 [label="rel#11:RelSubset#2.NONE"]
+[ERROR]                 subset21 [label="rel#21:RelSubset#2.ENUMERABLE"]
+[ERROR]         }
+[ERROR]         subgraph cluster3{
+[ERROR]                 label="Set 3 RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME)";
+[ERROR]                 rel12 [label="rel#12:LogicalProject\ninput=RelSubset#11,inputs=0,exprs=[$3]\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 rel22 [label="rel#22:EnumerableProject\ninput=RelSubset#21,inputs=0,exprs=[$3]\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 subset13 [label="rel#13:RelSubset#3.NONE"]
+[ERROR]                 subset23 [label="rel#23:RelSubset#3.ENUMERABLE"]
+[ERROR]         }
+[ERROR]         subgraph cluster4{
+[ERROR]                 label="Set 4 RecordType(JavaType(int) ID, JavaType(class java.lang.String) NAME, JavaType(int) ID0, JavaType(class java.lang.String) NAME0)";
+[ERROR]                 rel14 [label="rel#14:LogicalJoin\nleft=RelSubset#9,right=RelSubset#8,condition==($2, $0),joinType=inner\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 rel26 [label="rel#26:LogicalProject\ninput=RelSubset#11,exprs=[$2, $3, $0, $1]\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 rel27 [label="rel#27:EnumerableHashJoin\nleft=RelSubset#19,right=RelSubset#18,condition==($0, $2),joinType=inner\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 rel30 [label="rel#30:EnumerableProject\ninput=RelSubset#21,exprs=[$2, $3, $0, $1]\nrows=1500.0, cost={inf}",shape=box]
+[ERROR]                 subset16 [label="rel#16:RelSubset#4.NONE"]
+[ERROR]                 subset28 [label="rel#28:RelSubset#4.ENUMERABLE"]
+[ERROR]         }
+[ERROR]         root -> subset13;
+[ERROR]         subset8 -> rel1;
+[ERROR]         subset9 -> rel3;
+[ERROR]         subset11 -> rel10; rel10 -> subset8[label="0"]; rel10 -> subset9[label="1"];
+[ERROR]         subset11 -> rel17; rel17 -> subset16;
+[ERROR]         subset21 -> rel20; rel20 -> subset18[label="0"]; rel20 -> subset19[label="1"];
+[ERROR]         subset21 -> rel29; rel29 -> subset28;
+[ERROR]         subset13 -> rel12; rel12 -> subset11;
+[ERROR]         subset23 -> rel22; rel22 -> subset21;
+[ERROR]         subset16 -> rel14; rel14 -> subset9[label="0"]; rel14 -> subset8[label="1"];
+[ERROR]         subset16 -> rel26; rel26 -> subset11;
+[ERROR]         subset28 -> rel27; rel27 -> subset19[label="0"]; rel27 -> subset18[label="1"];
+[ERROR]         subset28 -> rel30; rel30 -> subset21;
+[ERROR] }
+[ERROR] -> [Help 1]

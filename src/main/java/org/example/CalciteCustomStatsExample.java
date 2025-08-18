@@ -12,6 +12,8 @@ import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.metadata.*;
 import org.apache.calcite.rel.rules.CoreRules;
+import org.apache.calcite.adapter.enumerable.EnumerableRules;
+import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
@@ -59,10 +61,16 @@ public class CalciteCustomStatsExample {
         VolcanoPlanner planner = new VolcanoPlanner();
         planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
 
-        // Add a rule for the optimizer to consider. JoinCommute is a classic rule
-        // that swaps the order of joins. The optimizer will use our statistics
-        // to decide if swapping is cheaper.
-        planner.addRule(CoreRules.JOIN_COMMUTE);
+    // Add rules for the optimizer to consider. JoinCommute is a classic rule
+    // that swaps the order of joins. The optimizer will use our statistics
+    // to decide if swapping is cheaper.
+    planner.addRule(CoreRules.JOIN_COMMUTE);
+    // Add Enumerable rules so Calcite can produce a physical plan
+    planner.addRule(EnumerableRules.ENUMERABLE_PROJECT_RULE);
+    planner.addRule(EnumerableRules.ENUMERABLE_JOIN_RULE);
+    planner.addRule(EnumerableRules.ENUMERABLE_TABLE_SCAN_RULE);
+    planner.addRule(EnumerableRules.ENUMERABLE_FILTER_RULE);
+    planner.addRule(EnumerableRules.ENUMERABLE_CALC_RULE);
 
         RelOptCluster cluster = RelOptCluster.create(planner, new RexBuilder(new JavaTypeFactoryImpl()));
 
@@ -112,7 +120,7 @@ public class CalciteCustomStatsExample {
         // PRODUCTS will likely be on the right (inner) side.
 
         // 6. Optimize the Plan
-        RelTraitSet desiredTraits = logicalPlan.getTraitSet().replace(Convention.NONE);
+    RelTraitSet desiredTraits = logicalPlan.getTraitSet().replace(EnumerableConvention.INSTANCE);
         planner.setRoot(logicalPlan);
         RelNode optimizedPlan = planner.findBestExp();
 
