@@ -49,18 +49,17 @@ public class CalciteCustomStatsExample {
 
     public static void main(String[] args) throws Exception {
         // --- SQL ---
-        final String sql =
-                "SELECT u.id, p.name " +
-                "FROM USERS u JOIN PRODUCTS p ON u.id = p.id";
-
+//        final String sql = "SELECT u.id, p.name FROM USERS u,  PRODUCTS p WHERE u.id = p.id AND u.id > 10 "; 
+        final String sql = "SELECT b.id, p.name FROM (SELECT u.id from USERS u WHERE u.id>20) b,   PRODUCTS p WHERE b.id = p.id  "; 
+        //"ORDER BY u.id" i smissing logicalSORT
         // --- Parse ---
         SqlParser.Config parserConfig = SqlParser.config().withCaseSensitive(false);
         SqlNode parsed = SqlParser.create(sql, parserConfig).parseQuery();
 
         // --- Schema with two tables ---
         SchemaPlus root = Frameworks.createRootSchema(true);
-        root.add("USERS", new CustomTable(200.0));        // 100 rows
-        root.add("PRODUCTS", new CustomTable(8_000_000.0)); // 1,000,000 rows
+        root.add("USERS", new CustomTable("Users",200.0)); // 100 rows
+        root.add("PRODUCTS", new CustomTable("Product",8_000_000.0)); // 1,000,000 rows
 
         // --- Catalog + Validator ---
         JavaTypeFactoryImpl typeFactory = new JavaTypeFactoryImpl();
@@ -98,80 +97,40 @@ public class CalciteCustomStatsExample {
         RexBuilder rexBuilder = new RexBuilder(typeFactory);
         RelOptCluster cluster = RelOptCluster.create(planner, rexBuilder);
 
-        // --- Custom metadata: override RowCount for TableScan of our CustomTable ---
-        // Build a provider from a RowCount handler
-//         RelMetadataProvider rowCountProvider =
-//                 ReflectiveRelMetadataProvider.reflectiveSource(
-//                         (BuiltInMetadata.RowCount.Handler) (rel, mq) -> {
-//                             if (rel instanceof TableScan) {
-//                                 CustomTable t = ((TableScan) rel).getTable().unwrap(CustomTable.class);
-//                                 if (t != null) {
-//                                     System.out.println("--> Using custom RowCount for "
-//                                             + ((TableScan) rel).getTable().getQualifiedName()
-//                                             + " = " + t.rowCount);
-//                                     return t.rowCount;
-//                                 }
-//                             }
-//                             return null; // delegate to next provider
-//                         },
-//                         BuiltInMetadata.RowCount.Handler.class);
-
-//         // Chain our provider before the default one, compile with Janino, and install it
-//         // MetadataHandlerProvider handlerProvider =
-//         //         JaninoRelMetadataProvider.of(
-//         //                 ChainedRelMetadataProvider.of(
-//         //                         ImmutableList.of(rowCountProvider, DefaultRelMetadataProvider.INSTANCE)));
-
-//         // RelMetadataQueryBase.THREAD_PROVIDERS.set((@Nullable JaninoRelMetadataProvider) handlerProvider);
-
-//         RelMetadataProvider chainedProvider =
-//         ChainedRelMetadataProvider.of(
-//                 Arrays.asList(
-//                         rowCountProvider,
-//                         DefaultRelMetadataProvider.INSTANCE
-//                 ));
-
-// JaninoRelMetadataProvider handlerProvider = JaninoRelMetadataProvider.of(chainedProvider);
-
-// // Install for the current thread
-// RelMetadataQueryBase.THREAD_PROVIDERS.set(handlerProvider);
-
-
-// Create a proper ReflectiveRelMetadataProvider for RowCount
-BuiltInMetadata.RowCount.Handler tableScanRowCountHandler =
-    new BuiltInMetadata.RowCount.Handler() {
-        @Override
-        public Double getRowCount(RelNode rel, RelMetadataQuery mq) {
-            if (rel instanceof TableScan) {
-                CustomTable t = ((TableScan) rel).getTable().unwrap(CustomTable.class);
-                if (t != null) {
-                    return 1210.0;
+        // Create a proper ReflectiveRelMetadataProvider for RowCount
+        BuiltInMetadata.RowCount.Handler tableScanRowCountHandler = new BuiltInMetadata.RowCount.Handler() {
+            @Override
+            public Double getRowCount(RelNode rel, RelMetadataQuery mq) {
+                if (rel instanceof TableScan) {
+                    // Check if this TableScan is for our CustomTable
+                    System.err.println("--> Using custom RowCount for "
+                            + ((TableScan) rel).getTable().getQualifiedName()
+                            + " = 1210.0");
+                    CustomTable t = ((TableScan) rel).getTable().unwrap(CustomTable.class);
+                    if (t != null) {
+                        return 1210.0;
+                    }
                 }
+                // delegate to next provider
+                return null;
             }
-            // delegate to next provider
-            return null;
-        }
-    };
+        };
 
-RelMetadataProvider rowCountProvider =
-    ReflectiveRelMetadataProvider.reflectiveSource(
-        tableScanRowCountHandler,
-        BuiltInMetadata.RowCount.Handler.class);
+        RelMetadataProvider rowCountProvider = ReflectiveRelMetadataProvider.reflectiveSource(
+                tableScanRowCountHandler,
+                BuiltInMetadata.RowCount.Handler.class);
 
-// Chain with default provider
-RelMetadataProvider chainedProvider =
-    ChainedRelMetadataProvider.of(
-        Arrays.asList(
-            rowCountProvider,
-            DefaultRelMetadataProvider.INSTANCE
-        )
-    );
+        // Chain with default provider
+        RelMetadataProvider chainedProvider = ChainedRelMetadataProvider.of(
+                Arrays.asList(
+                        rowCountProvider,
+                        DefaultRelMetadataProvider.INSTANCE));
 
-// Wrap in Janino provider
-JaninoRelMetadataProvider handlerProvider = JaninoRelMetadataProvider.of(chainedProvider);
+        // Wrap in Janino provider
+        JaninoRelMetadataProvider handlerProvider = JaninoRelMetadataProvider.of(chainedProvider);
 
-// Set for thread
-RelMetadataQueryBase.THREAD_PROVIDERS.set(handlerProvider);
+        // Set for thread
+        RelMetadataQueryBase.THREAD_PROVIDERS.set(handlerProvider);
 
         // Ensure cluster creates MQ instances bound to the thread-local provider
         cluster.setMetadataQuerySupplier(RelMetadataQuery::instance);
@@ -185,7 +144,7 @@ RelMetadataQueryBase.THREAD_PROVIDERS.set(handlerProvider);
                 StandardConvertletTable.INSTANCE,
                 SqlToRelConverter.config());
 
-        RelRoot rootRel = sqlToRel.convertQuery(validated, true, true);
+        RelRoot rootRel = sqlToRel.convertQuery(validated, false, true);
         RelNode logical = rootRel.rel;
 
         System.out.println("---- Initial Logical Plan ----");
@@ -203,16 +162,20 @@ RelMetadataQueryBase.THREAD_PROVIDERS.set(handlerProvider);
                 "Optimized", best, SqlExplainFormat.TEXT, SqlExplainLevel.ALL_ATTRIBUTES));
     }
 
-    /** Simple in-memory table with a fabricated row count.
-     * Implements ScannableTable so Enumerable rules can create a physical scan. */
+    /**
+     * Simple in-memory table with a fabricated row count.
+     * Implements ScannableTable so Enumerable rules can create a physical scan.
+     */
     static class CustomTable extends AbstractTable implements ScannableTable {
         final double rowCount;
-
-        CustomTable(double rowCount) {
+        final String name;
+        CustomTable(String name, double rowCount) {
+            this.name = name;
             this.rowCount = rowCount;
         }
 
-        @Override public RelDataType getRowType(RelDataTypeFactory typeFactory) {
+        @Override
+        public RelDataType getRowType(RelDataTypeFactory typeFactory) {
             final RelDataTypeFactory.Builder b = typeFactory.builder();
             b.add("ID", typeFactory.createJavaType(int.class));
             b.add("NAME", typeFactory.createJavaType(String.class));
@@ -220,22 +183,25 @@ RelMetadataQueryBase.THREAD_PROVIDERS.set(handlerProvider);
         }
 
         // Let Calcite know this is a plain TABLE (helps some tooling)
-        @Override public Schema.TableType getJdbcTableType() {
+        @Override
+        public Schema.TableType getJdbcTableType() {
             return Schema.TableType.TABLE;
         }
 
         // Provide basic stats too (not required for the demo, but nice to have)
-        @Override public Statistic getStatistic() {
+        @Override
+        public Statistic getStatistic() {
+            System.err.println("--> Using custom Statistic for "+name+" with rowCount = " + rowCount);
             return Statistics.of(rowCount, ImmutableList.of());
         }
 
         // Minimal data so a physical Enumerable plan can exist (we won't execute it)
-        @Override public Enumerable<Object[]> scan(DataContext root) {
+        @Override
+        public Enumerable<Object[]> scan(DataContext root) {
             List<Object[]> rows = Arrays.asList(
-                    new Object[]{1, "a"},
-                    new Object[]{2, "b"},
-                    new Object[]{3, "c"}
-            );
+                    new Object[] { 1, "a" },
+                    new Object[] { 2, "b" },
+                    new Object[] { 3, "c" });
             return Linq4j.asEnumerable(rows);
         }
     }
