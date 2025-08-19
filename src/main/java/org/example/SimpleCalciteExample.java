@@ -86,7 +86,7 @@ public class SimpleCalciteExample {
         // Some logical rules that may change join order
         planner.addRule(CoreRules.JOIN_COMMUTE);
         planner.addRule(CoreRules.JOIN_ASSOCIATE);
-        planner.addRule(CoreRules.FILTER_INTO_JOIN);
+        planner.addRule(CoreRules.FILTER_INTO_JOIN); //to push filters into joins
 
         // Cluster
         RexBuilder rexBuilder = new RexBuilder(typeFactory);
