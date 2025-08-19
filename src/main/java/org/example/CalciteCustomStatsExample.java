@@ -198,11 +198,12 @@ public class CalciteCustomStatsExample {
         // Minimal data so a physical Enumerable plan can exist (we won't execute it)
         @Override
         public Enumerable<Object[]> scan(DataContext root) {
-            List<Object[]> rows = Arrays.asList(
-                    new Object[] { 1, "a" },
-                    new Object[] { 2, "b" },
-                    new Object[] { 3, "c" });
-            return Linq4j.asEnumerable(rows);
+            // List<Object[]> rows = Arrays.asList(
+            //         new Object[] { 1, "a" },
+            //         new Object[] { 2, "b" },
+            //         new Object[] { 3, "c" });
+            // return Linq4j.asEnumerable(rows);
+            return null;
         }
     }
 }
