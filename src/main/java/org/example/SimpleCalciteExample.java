@@ -45,7 +45,7 @@ public class SimpleCalciteExample {
     public static void main(String[] args) throws Exception {
         // --- SQL ---
 //        final String sql = "SELECT u.id, p.name FROM USERS u,  PRODUCTS p WHERE u.id = p.id AND u.id > 10 "; 
-        final String sql = "SELECT b.id, p.name FROM (SELECT u.id from USERS u WHERE u.id>20) b,   PRODUCTS p WHERE b.id = p.id  "; 
+        final String sql = "SELECT u.id, p.name FROM  USERS u ,   PRODUCTS p WHERE u.id = p.id  and u.id>20"; 
         //"ORDER BY u.id" i smissing logicalSORT
         // --- Parse ---
         SqlParser.Config parserConfig = SqlParser.config().withCaseSensitive(false);
